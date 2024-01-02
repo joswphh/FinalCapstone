@@ -37,8 +37,7 @@ public class CategoriesController
     public List<Category> getAll()
     {
         // find and return all categories
-        var categories = categoryDao.getAllCategories();
-        return categories;
+        return categoryDao.getAllCategories();
     }
 
     // add the appropriate annotation for a get action
