@@ -14,6 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("products")
 @CrossOrigin
+@PreAuthorize("permitAll()")
 public class ProductsController
 {
     private ProductDao productDao;
