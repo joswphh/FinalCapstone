@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/FinalCapstone1.iml" filepath="$PROJECT_DIR$/.idea/FinalCapstone1.iml" />
+      <module fileurl="file://$PROJECT_DIR$/capstone-starter/easyshop-capstone-starter.iml" filepath="$PROJECT_DIR$/capstone-starter/easyshop-capstone-starter.iml" />
     </modules>
   </component>
 </project>
