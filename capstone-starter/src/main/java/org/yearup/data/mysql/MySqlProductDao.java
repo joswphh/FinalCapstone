@@ -19,8 +19,7 @@ public class MySqlProductDao extends MySqlDaoBase implements ProductDao
     }
 
     @Override
-    public List<Product> search(Integer categoryId, BigDecimal minPrice, BigDecimal maxPrice, String color)
-    {
+    public List<Product> search(Integer categoryId, BigDecimal minPrice, BigDecimal maxPrice, String color) {
         List<Product> products = new ArrayList<>();
 
         String sql = "SELECT * FROM products " +
@@ -29,33 +28,25 @@ public class MySqlProductDao extends MySqlDaoBase implements ProductDao
                 "   AND (price >= ? OR ? = -1) " +
                 "   AND (color = ? OR ? = '') ";
 
-        categoryId = categoryId == null ? -1 : categoryId;
-        minPrice = minPrice == null ? new BigDecimal("-1") : minPrice;
-        maxPrice = maxPrice == null ? new BigDecimal("-1") : maxPrice;
-        color = color == null ? "" : color;
+        try (Connection connection = getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, categoryId != null ? categoryId : -1);
+                statement.setInt(2, categoryId != null ? categoryId : -1);
+                statement.setBigDecimal(3, maxPrice != null ? maxPrice : new BigDecimal("-1"));
+                statement.setBigDecimal(4, maxPrice != null ? maxPrice : new BigDecimal("-1"));
+                statement.setBigDecimal(5, minPrice != null ? minPrice : new BigDecimal("-1"));
+                statement.setBigDecimal(6, minPrice != null ? minPrice : new BigDecimal("-1"));
+                statement.setString(7, color != null ? color : "");
+                statement.setString(8, color != null ? color : "");
 
-        try (Connection connection = getConnection())
-        {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setInt(1, categoryId);
-            statement.setInt(2, categoryId);
-            statement.setBigDecimal(3, maxPrice);
-            statement.setBigDecimal(4, maxPrice);
-            statement.setBigDecimal(5, minPrice);
-            statement.setBigDecimal(6, minPrice);
-            statement.setString(7, color);
-            statement.setString(8, color);
-
-            ResultSet row = statement.executeQuery();
-
-            while (row.next())
-            {
-                Product product = mapRow(row);
-                products.add(product);
+                try (ResultSet row = statement.executeQuery()) {
+                    while (row.next()) {
+                        Product product = mapRow(row);
+                        products.add(product);
+                    }
+                }
             }
-        }
-        catch (SQLException e)
-        {
+        } catch (SQLException e) {
             throw new RuntimeException(e);
         }
 
