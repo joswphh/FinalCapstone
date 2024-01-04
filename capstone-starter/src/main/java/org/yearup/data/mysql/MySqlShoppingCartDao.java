@@ -11,19 +11,24 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
+
 @Component
 public class MySqlShoppingCartDao extends MySqlDaoBase implements ShoppingCartDao {
+    private DataSource dataSource;
     public MySqlShoppingCartDao(DataSource dataSource) {
         super(dataSource);
+        this.dataSource = dataSource;
     }
 
     @Override
     public ShoppingCart getByUserId(int userId){
-        String sql = "SELECT * FROM easyshop.shopping_cart\n" +
-                "JOIN products on shopping_cart.product_id = products.product_id\n" +
-                "WHERE user_id = ?;";
+        String sql ="SELECT shopping_cart.user_id, shopping_cart.quantity, products.* " +
+                "FROM shopping_cart " +
+                "JOIN products ON shopping_cart.product_id = products.product_id " +
+                "WHERE shopping_cart.user_id = ?";
         ShoppingCart shoppingCart = new ShoppingCart();
-        try (Connection connection = getConnection()){
+        try (Connection connection = dataSource.getConnection()){
             PreparedStatement ps = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
             ps.setInt(1, userId);
             try(ResultSet rs = ps.executeQuery()){
@@ -39,7 +44,7 @@ public class MySqlShoppingCartDao extends MySqlDaoBase implements ShoppingCartDa
                             rs.getInt("stock"),
                             rs.getBoolean("featured"),
                             rs.getString("image_url"));
-//                    item.setQuantity(rs.getInt("quantity");
+                    item.setQuantity(rs.getInt("quantity"));
                     item.setProduct(products);
                     shoppingCart.add(item);
                 }
@@ -51,46 +56,14 @@ public class MySqlShoppingCartDao extends MySqlDaoBase implements ShoppingCartDa
     }
 
     @Override
-    public void addToCart(int userId, int productId, ShoppingCartItem item){
-        String sql = "INSERT INTO shopping_cart (user_id, product_id, quantity)" +
-                "VALUES(?, ?, ?)";
-        try(Connection connection = getConnection()){
-            PreparedStatement ps = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
-            ps.setInt(1, userId);
-            ps.setInt(2, productId);
-            ps.setInt(3, item.getQuantity());
-            ps.executeUpdate();
-//            return item;
-        }catch(SQLException e){
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void saveCart(int userId, int productId, int quantity) {
-        String sql = "UPDATE shopping_cart " +
-                "SET quantity = ? " +
-                "WHERE user_id = ? AND product_id = ?";
-        try (Connection connection = getConnection()) {
-            PreparedStatement ps = connection.prepareStatement(sql);
-            ps.setInt(1, quantity);
-            ps.setInt(2, userId);
-            ps.setInt(3, productId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void addProductToCart(int userId, int productId, int quantity) {
-        String sql = "INSERT INTO shopping_cart (user_id, product_id, quantity) VALUES (?, ?, ?)";
+    public void addProductToCart(int userId, int productId) {
+        String sql = "INSERT INTO shopping_cart (user_id, product_id, quantity) VALUES (?, ?, 1) " +
+                "ON DUPLICATE KEY UPDATE quantity = quantity + 1;";
 
         try (Connection connection = getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, productId);
-            ps.setInt(3, quantity);
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -125,4 +98,5 @@ public class MySqlShoppingCartDao extends MySqlDaoBase implements ShoppingCartDa
 
         }
     }
+
 }
