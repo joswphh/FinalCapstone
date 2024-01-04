@@ -2,6 +2,7 @@ package org.yearup.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.yearup.data.ProductDao;
@@ -15,8 +16,9 @@ import java.security.Principal;
 
 // convert this class to a REST controller
 // only logged in users should have access to these actions
-@RequestMapping
+@RequestMapping("cart")
 @RestController
+@CrossOrigin
 public class ShoppingCartController
 {
     // a shopping cart requires
@@ -34,6 +36,7 @@ public class ShoppingCartController
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ShoppingCart getCart(Principal principal)
     {
         try
@@ -58,13 +61,15 @@ public class ShoppingCartController
     // add a POST method to add a product to the cart - the url should be
     // https://localhost:8080/cart/products/15 (15 is the productId to be added
     @PostMapping("/products/{productId}")
-    public void addProductToCart(@PathVariable int productId, @RequestBody ShoppingCartItem shoppingCartItem, Principal principal){
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ShoppingCart addProducts(@PathVariable int productId, ShoppingCartItem shoppingCartItem, Principal principal){
 
         try {
             String userName = principal.getName();
             User user = userDao.getByUserName(userName);
             int userId = user.getId();
-            shoppingCartDao.addProductToCart(userId, productId, shoppingCartItem.getQuantity());
+            shoppingCartDao.addProductToCart(userId, productId);
+            return shoppingCartDao.getByUserId(userId);
         } catch (Exception ex) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Oops, our bad.", ex);
 
@@ -76,6 +81,7 @@ public class ShoppingCartController
     // https://localhost:8080/cart/products/15 (15 is the productId to be updated)
     // the BODY should be a ShoppingCartItem - quantity is the only value that will be updated
     @PutMapping("/products/{productId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public void updateProductInCart(@PathVariable int productId, @RequestBody ShoppingCartItem shoppingCartItem, Principal principal){
         try{
             String userName = principal.getName();
@@ -91,12 +97,14 @@ public class ShoppingCartController
 
 
     @DeleteMapping
-    public void clearCart(Principal principal){
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ShoppingCart clearCart(Principal principal){
         try {
             String userName = principal.getName();
             User user = userDao.getByUserName(userName);
             int userId = user.getId();
-            shoppingCartDao.clearCart(userId);
+             shoppingCartDao.clearCart(userId);
+             return shoppingCartDao.getByUserId(userId);
         }catch (Exception ex){
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Oops, our bad.");
         }

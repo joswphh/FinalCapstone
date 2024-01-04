@@ -14,6 +14,7 @@ public class Product
     private boolean isFeatured;
     private String imageUrl;
 
+
     public Product()
     {
     }
